@@ -8,7 +8,10 @@ def shorten_link(url_user):
     url = "https://api-ssl.bitly.com/v4/bitlinks"
     body = {"long_url": url_user, "title": "Битлинк"}
     response = requests.post(url, headers=header, json=body)
-    return (response.ok, response)
+    if response.ok:
+        return response
+    else:
+        response.raise_for_status()
 
 
 def is_bitlink(url_user):
@@ -16,41 +19,41 @@ def is_bitlink(url_user):
     bitlink = url_parse.netloc + url_parse.path
     url = f"https://api-ssl.bitly.com/v4/bitlinks/{bitlink}"
     response = requests.get(url, headers=header)
-    return (response.ok, bitlink)
+    if response.ok:
+        return bitlink
+    else:
+        response.raise_for_status()
 
 
 def count_clicks(bitlink):
     url = f"https://api-ssl.bitly.com/v4/bitlinks/{bitlink}/clicks/summary"
     response = requests.get(url, headers=header)
-    return (response.ok, response)
+    if response.ok:
+        return response
+    else:
+        response.raise_for_status()
 
 
 if __name__ == "__main__":
     load_dotenv(find_dotenv())
     header = {"Authorization": f"Bearer {os.environ.get('TOKEN_BITLY')}"}
 
-    url_user = input("Input long url to make it short https://")
-    if urlparse(url_user).scheme:
+    url_user = input("Input url https://")
+    if not urlparse(url_user).scheme:
         url_user = f"https://{url_user}"
     else:
         url_user = f"{url_user}"
 
-
     try:
-        status_ok, url_response_is_bitlink = is_bitlink(url_user)
-        if status_ok:
-            status_ok, response_count_clicks = count_clicks(url_response_is_bitlink)
-            if status_ok:
-                print(f"По вашей ссылке прошли {response_count_clicks.json()['total_clicks']} раз(a)")
-            else:
-                print(f"Ошибка подключения. Адрес: {url_response_is_bitlink}\n {response_count_clicks.text}")
-
-        else:
-            status_ok, response_shorten_link = shorten_link(url_user)
-            if status_ok:
+        url_response_is_bitlink = is_bitlink(url_user)
+        response_count_clicks = count_clicks(url_response_is_bitlink)
+        print(f"По вашей ссылке прошли {response_count_clicks.json()['total_clicks']} раз(a)")
+    except requests.HTTPError as e:
+        if e.response.status_code == 404:
+            try:
+                response_shorten_link = shorten_link(url_user)
                 print(response_shorten_link.json()["title"], response_shorten_link.json()["link"])
-            else:
-                print(f"Ошибка подключения. Адрес: {url_user}\n {response_shorten_link.text}")
-
-    except requests.exceptions.RequestException as e:
-        print("Ошибка: {}".format(e))
+            except requests.HTTPError as e:
+                print("Ошибка: {}".format(e))
+        else:
+            print("Ошибка: {}".format(e))
