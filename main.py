@@ -4,31 +4,24 @@ import os
 from dotenv import load_dotenv, find_dotenv
 
 
-def shorten_link(url_bitly, url):
-    body = {"long_url": url, "title": "Битлинк: "}
-    r = requests.post(url_bitly, headers=header, json=body)
-    r.raise_for_status()
-    return r
+def shorten_link(url_bitly, url, header):
+    body = {"long_url": url, "title": "Битлинк"}
+    response = requests.post(url_bitly, headers=header, json=body)
+    response.raise_for_status()
+    return response.json()['link']
 
 
-def is_bitlink(url_bitly, bitlink):
+def is_bitlink(url_bitly, bitlink, header):
     url = f"{url_bitly}{bitlink}"
-    r = requests.get(url, headers=header)
-    return r.ok
+    response = requests.get(url, headers=header)
+    return response.ok
 
 
-def count_clicks(url_bitly, bitlink):
+def count_clicks(url_bitly, bitlink, header):
     url = f"{url_bitly}{bitlink}/clicks/summary"
-    r = requests.get(url, headers=header)
-    r.raise_for_status()
-    return r
-
-
-def parts_json(json, *args):
-    result = ""
-    for element in args:
-        result += str(json[element])
-    return result
+    response = requests.get(url, headers=header)
+    response.raise_for_status()
+    return response.json()["total_clicks"]
 
 
 if __name__ == "__main__":
@@ -38,19 +31,18 @@ if __name__ == "__main__":
     header = {"Authorization": f"Bearer {os.environ.get('TOKEN_BITLY')}"}
 
     input_url = input("Input url: ")
-    url_parsed = urlparse(input_url, scheme='https')
+    url_parsed = urlparse(input_url)
     url_bitlink = url_parsed.netloc + url_parsed.path
-    if not url_parsed.scheme:
-        input_url = f"{url_parsed.scheme}://{input_url}"
 
     try:
-        if is_bitlink(url_bitly, url_bitlink):
-            response_count_clicks = count_clicks(url_bitly, url_bitlink)
-            clicks = parts_json(response_count_clicks.json(), "total_clicks")
+        if is_bitlink(url_bitly, url_bitlink, header):
+            clicks = count_clicks(url_bitly, url_bitlink, header)
             print(f"По вашей ссылке прошли {clicks} раз(a)")
         else:
-            response_shorten_link = shorten_link(url_bitly, input_url)
-            clicks = parts_json(response_shorten_link.json(), "title", "link")
-            print(clicks)
+            if not url_parsed.scheme:
+                print("Ошибка! Ссылку ввели неправильно, без http(s)")
+                exit()
+            bitlink = shorten_link(url_bitly, input_url, header)
+            print(f"Битлинк: {bitlink}")
     except requests.HTTPError as e:
         print("Ошибка: {}".format(e))
