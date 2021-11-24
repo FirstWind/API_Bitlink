@@ -5,11 +5,12 @@ import argparse
 from dotenv import load_dotenv
 
 
-def get_parse():
-    parser = argparse.ArgumentParser(description='Обрабатывает ссылку, проверяет на BitLink')
-    parser.add_argument('url', help='URL')
+def get_url():
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('url', help='Введите URL')
     args = parser.parse_args()
     return args.url
+
 
 def shorten_link(url_bitly, url, header):
     body = {"long_url": url, "title": "Битлинк"}
@@ -38,7 +39,7 @@ if __name__ == "__main__":
     header = {"Authorization": f"Bearer {os.environ.get('TOKEN_BITLY')}"}
 
     # input_url = input("Input url: ")
-    input_url = get_parse()
+    input_url = get_url()
     url_parsed = urlparse(input_url)
     url_bitlink = url_parsed.netloc + url_parsed.path
 
