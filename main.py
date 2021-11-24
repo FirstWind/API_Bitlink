@@ -1,8 +1,15 @@
 import requests
 from urllib.parse import urlparse
 import os
-from dotenv import load_dotenv, find_dotenv
+import argparse
+from dotenv import load_dotenv
 
+
+def get_parse():
+    parser = argparse.ArgumentParser(description='Обрабатывает ссылку, проверяет на BitLink')
+    parser.add_argument('url', help='URL')
+    args = parser.parse_args()
+    return args.url
 
 def shorten_link(url_bitly, url, header):
     body = {"long_url": url, "title": "Битлинк"}
@@ -27,10 +34,11 @@ def count_clicks(url_bitly, bitlink, header):
 if __name__ == "__main__":
     url_bitly = "https://api-ssl.bitly.com/v4/bitlinks/"
 
-    load_dotenv(find_dotenv())
+    load_dotenv()
     header = {"Authorization": f"Bearer {os.environ.get('TOKEN_BITLY')}"}
 
-    input_url = input("Input url: ")
+    # input_url = input("Input url: ")
+    input_url = get_parse()
     url_parsed = urlparse(input_url)
     url_bitlink = url_parsed.netloc + url_parsed.path
 
