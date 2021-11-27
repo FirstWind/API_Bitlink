@@ -38,7 +38,6 @@ if __name__ == "__main__":
     load_dotenv()
     header = {"Authorization": f"Bearer {os.environ.get('TOKEN_BITLY')}"}
 
-    # input_url = input("Input url: ")
     input_url = get_url()
     url_parsed = urlparse(input_url)
     url_bitlink = url_parsed.netloc + url_parsed.path
